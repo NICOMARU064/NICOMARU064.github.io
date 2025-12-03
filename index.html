@@ -13,11 +13,8 @@
     button { background: #4CAF50; color: white; cursor: pointer; border: none; }
     button:hover { background: #45a049; }
     .post { border-bottom: 1px solid #ddd; padding: 10px 0; }
-    .post:last-child { border-bottom: none; }
     .name { font-weight: bold; }
     .time { font-size: 0.8rem; color: gray; }
-    .delete-btn { background: red; color: white; padding: 5px 8px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
-    .delete-btn:hover { background: darkred; }
 </style>
 </head>
 <body>
@@ -30,105 +27,70 @@
     <form id="postForm">
         <input type="text" id="name" placeholder="名前" required>
         <textarea id="message" placeholder="メッセージ" rows="3" required></textarea>
-        <input type="password" id="password" placeholder="削除用パスワード" required>
         <button type="submit">投稿</button>
     </form>
+
     <div id="posts"></div>
 </main>
 
+<!-- Firebase SDK -->
 <script type="module">
-    // Firebase SDK v12 モジュール型インポート
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue, remove, get } from "https://www.gstatic.com/firebasejs/12.6.0/firebase-database.js";
+    // Firebase SDK 読み込み
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+    import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
+        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // あなたの Firebase 設定
+    // あなたの Firebase 設定（提供されたコードを使用）
     const firebaseConfig = {
-        apiKey: "AIzaSyCkzSBH9-4K3zHvwghFb9woc8QmZtRi-1A",
-        authDomain: "itaban.firebaseapp.com",
-        databaseURL: "https://itaban-default-rtdb.asia-southeast1.firebasedatabase.app",
-        projectId: "itaban",
-        storageBucket: "itaban.firebasestorage.app",
-        messagingSenderId: "614692053924",
-        appId: "1:614692053924:web:e0e3f9d139cbbf749dd731",
-        measurementId: "G-BDFNHHTNMC"
+        apiKey: "AIzaSyCrnB7-oE9mp3-NYpKMjz_Gl2c2bqrV_Jg",
+        authDomain: "itabankeijiban.firebaseapp.com",
+        projectId: "itabankeijiban",
+        storageBucket: "itabankeijiban.firebasestorage.app",
+        messagingSenderId: "27830504530",
+        appId: "1:27830504530:web:4d05efde1ced2aac3b638b",
+        measurementId: "G-371FGCTGFT"
     };
 
     // Firebase 初期化
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const analytics = getAnalytics(app);
+    const db = getFirestore(app);
 
     const form = document.getElementById('postForm');
     const postsDiv = document.getElementById('posts');
 
-    // SHA-256 ハッシュ化
-    async function hashPassword(password) {
-        const encoder = new TextEncoder();
-        const data = encoder.encode(password);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-        return Array.from(new Uint8Array(hashBuffer))
-            .map(b => b.toString(16).padStart(2, '0'))
-            .join('');
-    }
-
     // 投稿送信
-    form.addEventListener('submit', async e => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('name').value.trim();
         const message = document.getElementById('message').value.trim();
-        const password = document.getElementById('password').value.trim();
-        if (!name || !message || !password) return;
+        if (!name || !message) return;
 
-        const hashedPassword = await hashPassword(password);
-
-        const newPostRef = push(ref(db, 'posts'));
-        await set(newPostRef, {
+        await addDoc(collection(db, "posts"), {
             name,
             message,
-            time: new Date().toLocaleString(),
-            password: hashedPassword
+            created_at: serverTimestamp()
         });
 
         form.reset();
     });
 
-    // 投稿をリアルタイムで取得
-    onValue(ref(db, 'posts'), snapshot => {
+    // 投稿一覧リアルタイム取得
+    const q = query(collection(db, "posts"), orderBy("created_at", "desc"));
+    onSnapshot(q, (snapshot) => {
         postsDiv.innerHTML = '';
-        const data = snapshot.val();
-        if (data) {
-            const entries = Object.entries(data).reverse();
-            entries.forEach(([id, post]) => {
-                const div = document.createElement('div');
-                div.className = 'post';
-                div.innerHTML = `
-                    <div class="name">${post.name}</div>
-                    <div class="time">${post.time}</div>
-                    <div class="message">${post.message}</div>
-                    <button class="delete-btn" data-id="${id}">削除</button>
-                `;
-                postsDiv.appendChild(div);
-            });
-
-            // 削除ボタンイベント
-            document.querySelectorAll('.delete-btn').forEach(btn => {
-                btn.addEventListener('click', async () => {
-                    const id = btn.getAttribute('data-id');
-                    const inputPass = prompt("削除用パスワードを入力してください:");
-                    if (!inputPass) return;
-
-                    const hashedInput = await hashPassword(inputPass);
-                    const postSnap = await get(ref(db, 'posts/' + id));
-                    const postData = postSnap.val();
-
-                    if (postData && postData.password === hashedInput) {
-                        await remove(ref(db, 'posts/' + id));
-                        alert("削除しました");
-                    } else {
-                        alert("パスワードが違います");
-                    }
-                });
-            });
-        }
+        snapshot.forEach((doc) => {
+            const post = doc.data();
+            const div = document.createElement('div');
+            div.className = 'post';
+            div.innerHTML = `
+                <div class="name">${post.name}</div>
+                <div class="time">${post.created_at?.toDate().toLocaleString() || ''}</div>
+                <div class="message">${post.message}</div>
+            `;
+            postsDiv.appendChild(div);
+        });
     });
 </script>
 
