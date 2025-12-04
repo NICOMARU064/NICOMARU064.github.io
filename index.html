@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>板版掲示板</title>
+<title>シンプル掲示板（ログインなし）</title>
 <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
     header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
@@ -20,130 +20,59 @@
 <body>
 
 <header>
-    <h1>板版掲示板</h1>
+    <h1>シンプル掲示板</h1>
 </header>
 
 <main>
-    <!-- 新規登録フォーム -->
-    <form id="registerForm">
-        <h3>新規登録</h3>
-        <input type="email" id="regEmail" placeholder="メールアドレス" required>
-        <input type="password" id="regPassword" placeholder="パスワード" required>
-        <button type="submit">登録</button>
-    </form>
-
-    <!-- ログインフォーム -->
-    <form id="loginForm">
-        <h3>ログイン</h3>
-        <input type="email" id="loginEmail" placeholder="メールアドレス" required>
-        <input type="password" id="loginPassword" placeholder="パスワード" required>
-        <button type="submit">ログイン</button>
-    </form>
-
-    <!-- ログアウトボタン -->
-    <button id="logoutBtn" style="display:none;">ログアウト</button>
-    <p id="userInfo"></p>
-
-    <!-- 投稿フォーム（ログイン時のみ表示） -->
-    <form id="postForm" style="display:none;">
+    <!-- 投稿フォーム -->
+    <form id="postForm">
+        <input type="text" id="name" placeholder="名前" required>
         <textarea id="message" placeholder="メッセージ" rows="3" required></textarea>
         <button type="submit">投稿</button>
     </form>
 
+    <!-- 投稿一覧 -->
     <div id="posts"></div>
 </main>
 
 <script type="module">
+    // Firebase SDK モジュール版を読み込み
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
         from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-    import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } 
-        from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
-    // Firebase設定（あなたのプロジェクトに置き換え）
+    // Firebase 設定（あなたのプロジェクトに置き換え）
     const firebaseConfig = {
         apiKey: "AIzaSyCrnB7-oE9mp3-NYpKMjz_Gl2c2bqrV_Jg",
         authDomain: "itabankeijiban.firebaseapp.com",
         projectId: "itabankeijiban",
-        storageBucket: "itabankeijiban.firebasestorage.app",
+        storageBucket: "itabankeijiban.appspot.com", // ← 修正版
         messagingSenderId: "27830504530",
-        appId: "1:27830504530:web:4d05efde1ced2aac3b638b"
+        appId: "1:27830504530:web:4d05efde1ced2aac3b638b",
+        measurementId: "G-371FGCTGFT"
     };
 
+    // Firebase 初期化
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
-    const auth = getAuth(app);
 
-    const registerForm = document.getElementById('registerForm');
-    const loginForm = document.getElementById('loginForm');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const userInfo = document.getElementById('userInfo');
-    const postForm = document.getElementById('postForm');
+    const form = document.getElementById('postForm');
     const postsDiv = document.getElementById('posts');
 
-    // 新規登録
-    registerForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('regEmail').value;
-        const password = document.getElementById('regPassword').value;
-        try {
-            await createUserWithEmailAndPassword(auth, email, password);
-            alert("登録完了！ログインしました");
-        } catch (error) {
-            alert("登録エラー: " + error.message);
-        }
-    });
-
-    // ログイン
-    loginForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('loginEmail').value;
-        const password = document.getElementById('loginPassword').value;
-        try {
-            await signInWithEmailAndPassword(auth, email, password);
-            alert("ログイン成功");
-        } catch (error) {
-            alert("ログインエラー: " + error.message);
-        }
-    });
-
-    // ログアウト
-    logoutBtn.addEventListener('click', async () => {
-        await signOut(auth);
-    });
-
-    // 認証状態の監視
-    onAuthStateChanged(auth, (user) => {
-        if (user) {
-            userInfo.textContent = `ログイン中: ${user.email}`;
-            logoutBtn.style.display = "block";
-            postForm.style.display = "flex";
-            loginForm.style.display = "none";
-            registerForm.style.display = "none";
-        } else {
-            userInfo.textContent = "";
-            logoutBtn.style.display = "none";
-            postForm.style.display = "none";
-            loginForm.style.display = "flex";
-            registerForm.style.display = "flex";
-        }
-    });
-
     // 投稿送信
-    postForm.addEventListener('submit', async (e) => {
+    form.addEventListener('submit', async (e) => {
         e.preventDefault();
+        const name = document.getElementById('name').value.trim();
         const message = document.getElementById('message').value.trim();
-        if (!message) return;
-        const user = auth.currentUser;
-        if (!user) return alert("ログインしてください");
+        if (!name || !message) return;
 
         await addDoc(collection(db, "posts"), {
-            name: user.email,
+            name,
             message,
             created_at: serverTimestamp()
         });
 
-        postForm.reset();
+        form.reset();
     });
 
     // 投稿一覧リアルタイム取得
@@ -155,3 +84,14 @@
             const div = document.createElement('div');
             div.className = 'post';
             div.innerHTML = `
+                <div class="name">${post.name}</div>
+                <div class="time">${post.created_at?.toDate().toLocaleString() || ''}</div>
+                <div class="message">${post.message}</div>
+            `;
+            postsDiv.appendChild(div);
+        });
+    });
+</script>
+
+</body>
+</html>
