@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ログイン必須掲示板</title>
+<title>板版掲示板</title>
 <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
     header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
@@ -20,7 +20,7 @@
 <body>
 
 <header>
-    <h1>ログイン必須掲示板</h1>
+    <h1>板版掲示板</h1>
 </header>
 
 <main>
@@ -62,12 +62,12 @@
 
     // Firebase設定（あなたのプロジェクトに置き換え）
     const firebaseConfig = {
-        apiKey: "AIzaSyCrnB7-oE9mp3-NYpKMjz_Gl2c2bqrV_Jg",
-        authDomain: "itabankeijiban.firebaseapp.com",
-        projectId: "itabankeijiban",
-        storageBucket: "itabankeijiban.appspot.com",
-        messagingSenderId: "27830504530",
-        appId: "1:27830504530:web:4d05efde1ced2aac3b638b"
+        apiKey: "あなたのAPIキー",
+        authDomain: "あなたのプロジェクトID.firebaseapp.com",
+        projectId: "あなたのプロジェクトID",
+        storageBucket: "あなたのプロジェクトID.appspot.com",
+        messagingSenderId: "送信者ID",
+        appId: "アプリID"
     };
 
     const app = initializeApp(firebaseConfig);
@@ -115,4 +115,43 @@
     // 認証状態の監視
     onAuthStateChanged(auth, (user) => {
         if (user) {
-            userInfo.textContent = `ログイン中: ${user.email
+            userInfo.textContent = `ログイン中: ${user.email}`;
+            logoutBtn.style.display = "block";
+            postForm.style.display = "flex";
+            loginForm.style.display = "none";
+            registerForm.style.display = "none";
+        } else {
+            userInfo.textContent = "";
+            logoutBtn.style.display = "none";
+            postForm.style.display = "none";
+            loginForm.style.display = "flex";
+            registerForm.style.display = "flex";
+        }
+    });
+
+    // 投稿送信
+    postForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const message = document.getElementById('message').value.trim();
+        if (!message) return;
+        const user = auth.currentUser;
+        if (!user) return alert("ログインしてください");
+
+        await addDoc(collection(db, "posts"), {
+            name: user.email,
+            message,
+            created_at: serverTimestamp()
+        });
+
+        postForm.reset();
+    });
+
+    // 投稿一覧リアルタイム取得
+    const q = query(collection(db, "posts"), orderBy("created_at", "desc"));
+    onSnapshot(q, (snapshot) => {
+        postsDiv.innerHTML = '';
+        snapshot.forEach((doc) => {
+            const post = doc.data();
+            const div = document.createElement('div');
+            div.className = 'post';
+            div.innerHTML = `
