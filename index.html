@@ -3,7 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>シンプル掲示板（ログインなし）</title>
+<title>板版掲示板 - ログイン不要で誰でも投稿OK</title>
+
+<!-- SEOメタタグ -->
+<meta name="description" content="誰でも投稿できるリアルタイム掲示板。ログイン不要で簡単に使えます。スマホ対応。">
+<meta name="keywords" content="掲示板,チャット,リアルタイム,ログイン不要,無料">
+<link rel="canonical" href="https://あなたのサイトURL/">
+
+<!-- SNSシェア用OGPタグ -->
+<meta property="og:title" content="シンプル掲示板 - ログイン不要">
+<meta property="og:description" content="誰でも投稿できるリアルタイム掲示板。ログイン不要で簡単に使えます。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://あなたのサイトURL/">
+<meta property="og:image" content="https://あなたのサイトURL/og-image.jpg">
+
 <style>
     body { font-family: Arial, sans-serif; background: #f4f4f4; margin: 0; }
     header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
@@ -20,7 +33,8 @@
 <body>
 
 <header>
-    <h1>シンプル掲示板</h1>
+    <h1>板版掲示板</h1>
+    <p>ログイン不要・誰でも投稿できます。荒らし禁止</p>
 </header>
 
 <main>
@@ -36,7 +50,6 @@
 </main>
 
 <script type="module">
-    // Firebase SDK モジュール版を読み込み
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
         from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -46,13 +59,12 @@
         apiKey: "AIzaSyCrnB7-oE9mp3-NYpKMjz_Gl2c2bqrV_Jg",
         authDomain: "itabankeijiban.firebaseapp.com",
         projectId: "itabankeijiban",
-        storageBucket: "itabankeijiban.appspot.com", // ← 修正版
+        storageBucket: "itabankeijiban.appspot.com",
         messagingSenderId: "27830504530",
         appId: "1:27830504530:web:4d05efde1ced2aac3b638b",
         measurementId: "G-371FGCTGFT"
     };
 
-    // Firebase 初期化
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
