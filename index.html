@@ -5,7 +5,7 @@
 
 <link rel="icon" type="image/png" href="favicon.png">
 
-<!-- Google AdSense -->
+<!-- Google AdSense（既存） -->
 <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6175217893912283"
      crossorigin="anonymous"></script>
 
@@ -13,7 +13,6 @@
 <meta name="description" content="誰でも投稿できるリアルタイム掲示板。ログイン不要で簡単に使えます。スマホ対応。">
 <meta name="keywords" content="掲示板,チャット,リアルタイム,ログイン不要,無料,自慢,自慢話,自慢話掲示板">
 <link rel="canonical" href="https://nicomaru064.github.io/index.html">
-
 
 <!-- SNSシェア用OGPタグ -->
 <meta property="og:title" content="シンプル掲示板 - ログイン不要">
@@ -50,7 +49,7 @@
         <button type="submit">投稿</button>
     </form>
 
- <!-- AdSense広告ユニット -->
+    <!-- 既存広告 -->
     <ins class="adsbygoogle"
          style="display:block"
          data-ad-client="ca-pub-6175217893912283"
@@ -61,6 +60,18 @@
          (adsbygoogle = window.adsbygoogle || []).push({});
     </script>
 
+    <!-- ▼▼ 追加した横長広告（yokonaga） ▼▼ -->
+    <ins class="adsbygoogle"
+         style="display:block"
+         data-ad-client="ca-pub-6175217893912283"
+         data-ad-slot="7029526907"
+         data-ad-format="auto"
+         data-full-width-responsive="true"></ins>
+    <script>
+         (adsbygoogle = window.adsbygoogle || []).push({});
+    </script>
+    <!-- ▲▲ ここまで追加 ▲▲ -->
+
     <!-- 投稿一覧 -->
     <div id="posts"></div>
 </main>
@@ -70,7 +81,6 @@
     import { getFirestore, collection, addDoc, query, orderBy, onSnapshot, serverTimestamp } 
         from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-    // Firebase 設定（あなたのプロジェクトに置き換え）
     const firebaseConfig = {
         apiKey: "AIzaSyCrnB7-oE9mp3-NYpKMjz_Gl2c2bqrV_Jg",
         authDomain: "itabankeijiban.firebaseapp.com",
@@ -87,39 +97,6 @@
     const form = document.getElementById('postForm');
     const postsDiv = document.getElementById('posts');
 
-    // 投稿送信
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
         const name = document.getElementById('name').value.trim();
-        const message = document.getElementById('message').value.trim();
-        if (!name || !message) return;
-
-        await addDoc(collection(db, "posts"), {
-            name,
-            message,
-            created_at: serverTimestamp()
-        });
-
-        form.reset();
-    });
-
-    // 投稿一覧リアルタイム取得
-    const q = query(collection(db, "posts"), orderBy("created_at", "desc"));
-    onSnapshot(q, (snapshot) => {
-        postsDiv.innerHTML = '';
-        snapshot.forEach((doc) => {
-            const post = doc.data();
-            const div = document.createElement('div');
-            div.className = 'post';
-            div.innerHTML = `
-                <div class="name">${post.name}</div>
-                <div class="time">${post.created_at?.toDate().toLocaleString() || ''}</div>
-                <div class="message">${post.message}</div>
-            `;
-            postsDiv.appendChild(div);
-        });
-    });
-</script>
-
-</body>
-</html>
